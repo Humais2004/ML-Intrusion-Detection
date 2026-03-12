@@ -1,0 +1,41 @@
+## 🗺️ Project Roadmap & Implementation Plan
+
+### Current Status
+* **[COMPLETED]** Dataset Acquisition & Cloud Setup.
+* **[COMPLETED]** Exploratory Data Analysis (EDA) in Google Colab.
+* **[COMPLETED]** Data Preprocessing and merging all raw CSV files into a single, clean dataset.
+
+---
+
+
+
+* ** (Lead & GPU Architecture):** Responsible for the Machine Learning pipeline, exporting model weights, and writing the custom **CUDA/C++ kernels** for the GPU inference engine.
+* **(Distributed Systems & I/O):** Responsible for the **MPI (Message Passing Interface)** architecture. Will build the "Master Node" logic, the Trace-Driven Traffic Replayer, and handle the distribution of data chunks across network nodes.
+* ** (Multi-threading & UI):** Responsible for the **OpenMP** data parsing logic on the "Worker Nodes" and integrating the **Dear ImGui** Windows dashboard to visualize the real-time alerts.
+
+---
+
+### 📅 Phased Execution Plan
+
+#### Phase 1: The ML-to-C++ Bridge (Weeks 1-2)
+* **P** Train a lightweight Multilayer Perceptron (MLP) Neural Network on the merged CSV data using PyTorch in Colab. Export the trained matrices/biases to a `model_weights.json` file.
+* **** Set up the Visual Studio Solution (`.sln`) with MPI, CUDA, and OpenMP linked. Write a C++ class to parse the JSON file and load the weights into standard `std::vector` arrays.
+
+#### Phase 2: The Core GPU Engine (Weeks 3-4)
+* **** Write the `kernel.cu` file. Allocate VRAM (`cudaMalloc`), transfer the weights (`cudaMemcpy`), and write the matrix multiplication logic to classify a batch of network features as `0` (Benign) or `1` (Attack).
+* **Testing:** Validate the C++ GPU output against the Python model's output to ensure mathematical accuracy before adding network layers.
+
+#### Phase 3: The PDC Layer - MPI & OpenMP (Weeks 5-6)
+* **** Wrap the application in `MPI_Init`. Build the Master-Worker topology. The Master reads the merged CSV file and uses `MPI_Scatter` to send batches of raw text rows to the Workers.
+* **** Inside the Worker nodes, implement `#pragma omp parallel for` loops. The CPU threads will concurrently parse the raw CSV strings, normalize them, and feed the clean float arrays directly to Khizar's CUDA engine. 
+* **Integration:** Workers use `MPI_Gather` to send the `0` or `1` predictions back to the Master node.
+
+#### Phase 4: UI Dashboard & Traffic Replayer (Weeks 7-8)
+* **** Initialize Dear ImGui on the Master node. Build a dashboard showing "Packets/Sec" and a live log of detected anomalies.
+* **** Add `std::chrono` timers to the Master node's CSV reader to simulate real-time network speeds (e.g., streaming 50,000 packets per second to the workers instead of loading the whole file at once).
+
+#### Phase 5: Profiling & Final Presentation (Week 9)
+* **Team:** Conduct the hardware acceleration stress tests. 
+* Turn off the traffic pacing and blast 1 million rows through the system.
+* Record the Sequential CPU time vs. the Parallel (MPI + OpenMP + CUDA) time.
+* Calculate the exact parallel speedup ($S = \frac{T_{sequential}}{T_{parallel}}$) and finalize the project documentation and GitHub repo.
