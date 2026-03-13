@@ -1,5 +1,5 @@
 # MUHAMMAD HUMAIS FA23-BSE-120
-#KHIZAR ABBAS FA23-BSE-064
+# KHIZAR ABBAS FA23-BSE-064
 # P-NIDS: Parallelized Network Intrusion Detection System 🛡️⚡
 
 ![C++](https://img.shields.io/badge/C++-17-blue.svg)
