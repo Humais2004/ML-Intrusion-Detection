@@ -1,0 +1,12 @@
+﻿// DesktopApp.cpp : Defines the entry point for the application.
+//
+
+#include "DesktopApp.h"
+
+using namespace std;
+
+int main()
+{
+	cout << "Hello CMake." << endl;
+	return 0;
+}

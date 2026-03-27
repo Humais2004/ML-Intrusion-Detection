@@ -1,0 +1,7 @@
+data/
+output/
+output2/
+.venv
+.vs
+out/
+external/
