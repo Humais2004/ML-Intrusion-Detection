@@ -2,14 +2,12 @@
 #include <QApplication>
 #include <iostream>
 
-// Include your custom engine headers
 #include "gui/mainwindow.h"
 #include "parallel/mpi_engine.h"
 
 int main(int argc, char** argv) {
-    // 1. Initialize MPI with Thread Support
-    // Since we are using Qt threads and background C++ threads, 
-    // we need MPI to know this is a multi-threaded environment.
+    // 1. Initialize MPI
+    // We use MPI_Init_thread because Qt and our DataLoader use threads.
     int provided_thread_level;
     MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided_thread_level);
 
@@ -19,39 +17,30 @@ int main(int argc, char** argv) {
 
     int exit_code = 0;
 
-    // ---------------------------------------------------------
-    // THE SPLIT: Master vs. Workers
-    // ---------------------------------------------------------
     if (rank == 0) {
-        // --- MASTER NODE (Rank 0) ---
-        // The Master is the ONLY node that gets a Graphical User Interface.
-        std::cout << "[MASTER] Initializing NIDS GUI. Total Cores: " << world_size << "\n";
+        // --- MASTER NODE (UI & Orchestration) ---
+        std::cout << "[MASTER] Starting NIDS Application. Total MPI Nodes: " << world_size << std::endl;
 
-        // Initialize Qt6 Application
         QApplication app(argc, argv);
 
-        // Create the Main Window and pass the world_size so the GUI 
-        // knows how many workers it has for the statistics screen.
+        // Pass world_size to the GUI so it knows how to divide the batch sizes
         MainWindow window(world_size);
         window.show();
 
-        // Start the GUI Event Loop. 
-        // The program will pause here until the user clicks the "X" to close the window.
+        // The app pauses here and waits for the user to click buttons.
         exit_code = app.exec();
 
-        // Once the GUI is closed, we must gracefully shut down the worker ranks.
-        // We broadcast a kill signal (-1) so they break out of their infinite loops.
+        // Once the user closes the window, tell the workers to shut down.
+        std::cout << "[MASTER] GUI closed. Broadcasting kill signal to workers..." << std::endl;
         MPIEngine::broadcastKillSignal(world_size);
-        std::cout << "[MASTER] GUI Closed. Shutting down system.\n";
-
     }
     else {
-        // --- WORKER NODES (Rank > 0) ---
-        // Workers are "Headless". They never see the Qt GUI.
-        // They immediately jump into an infinite loop waiting for data from the Master.
+        // --- WORKER NODES (Headless Math Engines) ---
+        std::cout << "[WORKER " << rank << "] Online and waiting for instructions." << std::endl;
 
-        int num_features = 39; // The number of columns in your dataset
-        MPIEngine::runWorkerInference(rank, num_features);
+        // Workers sit in an infinite loop inside this function until they receive a kill signal
+        MPIEngine::runWorkerInference(rank, 39);
+
     }
 
     // 3. Clean up and Exit

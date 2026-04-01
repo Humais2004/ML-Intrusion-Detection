@@ -14,14 +14,13 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
 # ---------------------------------------------------------
-# 3. FIND PACKAGES
+# 3. FIND PACKAGES (Updated for OpenMP!)
 # ---------------------------------------------------------
 # IF CMAKE FAILS TO FIND QT, UNCOMMENT THE LINE BELOW AND FIX THE PATH
-# set(CMAKE_PREFIX_PATH "C:/Qt/6.x.x/msvc2019_64" ${CMAKE_PREFIX_PATH})
-
+set(CMAKE_PREFIX_PATH "C:/Qt/6.11.0/msvc2022_64" ${CMAKE_PREFIX_PATH})
 find_package(Qt6 COMPONENTS Widgets REQUIRED)
 find_package(MPI REQUIRED)
-# find_package(OpenMP REQUIRED) # Uncomment this when we add the OpenMP preprocessor back
+find_package(OpenMP REQUIRED) # <--- UNCOMMENTED: Enables the Preprocessor CPU cores
 
 # ---------------------------------------------------------
 # 4. XGBOOST PATHS
@@ -34,7 +33,7 @@ set(XGB_DLL_PATH "${XGB_ROOT}/lib/xgboost.dll")
 # ---------------------------------------------------------
 # 5. COLLECT ALL SOURCE FILES
 # ---------------------------------------------------------
-# This grabs your main.cpp AND the new GUI files automatically
+# GLOB_RECURSE automatically grabs mainwindow, mpi_engine, preprocessor, data_loader, etc.
 file(GLOB_RECURSE SOURCES 
     "src/*.cpp"
     "src/*.h"
@@ -44,6 +43,7 @@ file(GLOB_RECURSE SOURCES
 # ---------------------------------------------------------
 # 6. CREATE EXECUTABLE
 # ---------------------------------------------------------
+# Simplified: No manual lists needed since SOURCES caught everything
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 # ---------------------------------------------------------
@@ -59,9 +59,9 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 # 8. LINK LIBRARIES (The Glue)
 # ---------------------------------------------------------
 target_link_libraries(${PROJECT_NAME} PRIVATE 
-    Qt6::Widgets       # <--- Added Qt
+    Qt6::Widgets       
     MPI::MPI_CXX
-    # OpenMP::OpenMP_CXX # Uncomment when OpenMP is added
+    OpenMP::OpenMP_CXX # <--- UNCOMMENTED: Links the OpenMP library
     "${XGB_LIB_PATH}"
 )
 
