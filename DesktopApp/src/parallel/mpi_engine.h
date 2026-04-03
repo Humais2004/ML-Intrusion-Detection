@@ -1,6 +1,16 @@
+// mpi_engine.h
 #ifndef MPI_ENGINE_H
 #define MPI_ENGINE_H
 
+#include <mpi.h>
+#include <xgboost/c_api.h>
+
+// Communication Tags
+#define TAG_DATA    1
+#define TAG_RESULT  2
+#define TAG_LOG     3
+#define TAG_END_JOB 4  // New: Resets worker for next file
+#define TAG_KILL    99 // Final: Shuts down the worker process
 #include <vector>
 #include "../engine/batch_manager.h"
 #include "../common/packet_types.h" // Required for the ProcessingStats return type

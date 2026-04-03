@@ -63,7 +63,7 @@ void runPreprocessor(BatchManager<std::vector<float>>& raw_queue,
         int total_rows = raw_batch.size() / NUM_RAW_FEATURES;
         std::vector<float> clean_batch(total_rows * NUM_CLEAN_FEATURES);
 
-#pragma omp parallel for
+        #pragma omp parallel for
         for (int i = 0; i < total_rows; ++i) {
             int r_idx = i * NUM_RAW_FEATURES;
             int c_idx = i * NUM_CLEAN_FEATURES;

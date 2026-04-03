@@ -4,7 +4,6 @@
 #include <QMessageBox>
 #include <thread>
 #include <mpi.h> 
-
 #include "../engine/data_loader.h"
 #include "../engine/preprocessor.h" 
 #include "../parallel/mpi_engine.h"
@@ -81,10 +80,10 @@ void MainWindow::onRunClicked() {
         // 3. Run MPI Master Inference
         ProcessingStats stats = MPIEngine::runMasterInference(clean_queue, m_mpi_size, 39, this);
 
-        // 4. Shutdown Workers
-        MPIEngine::broadcastKillSignal(m_mpi_size);
+        // --- REMOVED: Workers are no longer killed here ---
+        // Workers will stay alive waiting for the next job
 
-        // 5. Join Local Threads
+        // 4. Join Local Threads
         if (loaderThread.joinable()) loaderThread.join();
         if (preprocessorThread.joinable()) preprocessorThread.join();
 
@@ -144,4 +143,11 @@ void MainWindow::showFinalStats(ProcessingStats stats) {
     runButton->setEnabled(true);
 }
 
-MainWindow::~MainWindow() {}
+MainWindow::~MainWindow() {
+    // When the user clicks the "X" on the window, 
+    // this sends the final Kill Tag (99) to workers.
+    MPIEngine::broadcastKillSignal(m_mpi_size);
+
+    // Give them a tiny moment to finish their cleanup
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+}
