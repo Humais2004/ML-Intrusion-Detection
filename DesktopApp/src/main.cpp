@@ -19,7 +19,6 @@ int main(int argc, char** argv) {
 
     if (rank == 0) {
         // --- MASTER NODE (UI & Orchestration) ---
-        std::cout << "[MASTER] Starting NIDS Application. Total MPI Nodes: " << world_size << std::endl;
 
         QApplication app(argc, argv);
 
@@ -36,7 +35,6 @@ int main(int argc, char** argv) {
     }
     else {
         // --- WORKER NODES (Headless Math Engines) ---
-        std::cout << "[WORKER " << rank << "] Online and waiting for instructions." << std::endl;
 
         // Workers sit in an infinite loop inside this function until they receive a kill signal
         MPIEngine::runWorkerInference(rank, 39);
