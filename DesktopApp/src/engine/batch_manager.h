@@ -10,22 +10,26 @@ class BatchManager {
 private:
     std::queue<T> queue;
     std::mutex mtx;
-    std::condition_variable cv;
+    std::condition_variable cv_consumer;  // consumers wait here when queue is empty
+    std::condition_variable cv_producer;  // producers wait here when queue is full
     bool done_producing = false;
+    static const size_t MAX_CAPACITY = 5;
 
 public:
     // Pushes data into the queue safely using std::move to prevent RAM duplication
+    // Blocks if the queue already has MAX_CAPACITY batches to cap memory usage
     void produce(T&& item) {
         std::unique_lock<std::mutex> lock(mtx);
+        cv_producer.wait(lock, [this]() { return queue.size() < MAX_CAPACITY; });
         queue.push(std::move(item));
         lock.unlock();
-        cv.notify_one(); // Wake up any sleeping consumers (like OpenMP)
+        cv_consumer.notify_one(); // Wake up any sleeping consumers (like OpenMP)
     }
 
     // Pulls data out. Returns false ONLY if the file is completely finished AND the queue is empty.
     bool consume(T& item) {
         std::unique_lock<std::mutex> lock(mtx);
-        cv.wait(lock, [this]() { return !queue.empty() || done_producing; });
+        cv_consumer.wait(lock, [this]() { return !queue.empty() || done_producing; });
 
         if (queue.empty() && done_producing) {
             return false;
@@ -33,6 +37,8 @@ public:
 
         item = std::move(queue.front());
         queue.pop();
+        lock.unlock();
+        cv_producer.notify_one(); // Wake up producer if it was blocked on a full queue
         return true;
     }
 
@@ -41,7 +47,7 @@ public:
         std::unique_lock<std::mutex> lock(mtx);
         done_producing = true;
         lock.unlock();
-        cv.notify_all(); // Wake up everyone so they can shut down gracefully
+        cv_consumer.notify_all(); // Wake up everyone so they can shut down gracefully
     }
 };
 
